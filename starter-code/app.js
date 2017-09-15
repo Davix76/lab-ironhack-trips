@@ -6,12 +6,15 @@ const logger         = require("morgan");
 const cookieParser   = require("cookie-parser");
 const bodyParser     = require("body-parser");
 const mongoose       = require("mongoose");
+const passport = require('passport');
 const app            = express();
-
+//load environment variables from .env (top)
+require("dotenv").config();
 // Controllers
 
+require("./config/passport-config.js");
 // Mongoose configuration
-mongoose.connect("mongodb://localhost/ironhack-trips");
+mongoose.connect(process.env.MONGODB_URI);
 
 // Middlewares configuration
 app.use(logger("dev"));
@@ -19,8 +22,8 @@ app.use(logger("dev"));
 // View engine configuration
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
-app.use(expressLayouts);
-app.set("layout", "layouts/main-layout");
+// app.use(expressLayouts);
+// app.set("layout", "index.ejs");
 app.use(express.static(path.join(__dirname, "public")));
 
 // Access POST params with body parser
@@ -32,10 +35,17 @@ app.use(session({
   secret: "ironhack trips"
 }));
 app.use(cookieParser());
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Routes
-// app.use("/", index);
+const index = require('./routes/index');
+app.use('/', index);
 
+const myAuthRoutes = require("./routes/auth-router.js");
+app.use(myAuthRoutes);
+const myTripRoutes = require("./routes/trips-router.js");
+app.use(myTripRoutes);
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
   const err = new Error("Not Found");
